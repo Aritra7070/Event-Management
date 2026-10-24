@@ -142,6 +142,12 @@ export function EventLifecycleActions({
             Delete draft
           </button>
         ) : null}
+
+        {status === "archived" ? (
+          <span className="text-xs text-slate-500">
+            Archived — an admin can restore this event to draft.
+          </span>
+        ) : null}
       </div>
 
       {error ? (
