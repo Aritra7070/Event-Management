@@ -38,8 +38,11 @@ npm run dev
 ## Module layout
 
 ```
-app/                          Next.js routes (added in later phases)
-components/events/            EventPage, EventCard, RegisterPanel, builder sections
+app/dashboard/events/         organizer list, new-event form, edit page
+app/dashboard/events/actions.ts  server actions for builder + lifecycle
+app/api/blob/upload/          Vercel Blob client-upload token route
+components/events/            MarkdownRenderer, StatusBadge, EventPage, RegisterPanel
+components/events/builder/    9 builder sections + lifecycle actions
 lib/db/schema/events.ts       events, event_hosts, questions
 lib/validators/events.ts      Zod schemas and slug rules
 lib/services/events.ts        P0 read functions + event writes
@@ -50,6 +53,17 @@ lib/cache.ts                  Next.js cache tags
 scripts/seed-events.ts        5-event demo seed
 drizzle/                      generated migrations
 ```
+
+## Builder routes
+
+- `/dashboard/events` — organizer dashboard (always dynamic)
+- `/dashboard/events/new` — title form; creates a private draft only on submit
+- `/dashboard/events/[id]/edit` — builder with auto-save per section
+- `/dashboard/events/[id]/preview` — preview (arrives with the shared EventPage)
+- `/e/[slug]` — public event page (arrives with the shared EventPage)
+
+The new-event page deliberately does **not** create a draft during render, so
+refreshing or prefetching `/dashboard/events/new` cannot create junk drafts.
 
 ## Interface contract for the rest of the team
 
