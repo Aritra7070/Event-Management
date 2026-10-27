@@ -2,8 +2,6 @@
 import Link from "next/link";
 import {
   Activity,
-  ArrowDownRight,
-  ArrowUpRight,
   CalendarDays,
   ChevronRight,
   CircleAlert,
@@ -16,6 +14,8 @@ import {
   UserRoundCheck,
   type LucideIcon,
 } from "lucide-react";
+
+import { getAdminEventStats } from "@/lib/services/admin";
 
 const navigation: {
   label: string;
@@ -30,47 +30,18 @@ const navigation: {
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
-const metrics = [
-  {
-    label: "Total users",
-    value: "—",
-    note: "Waiting for database connection",
-    icon: Users,
-    color: "text-blue-600",
-    background: "bg-blue-50",
-  },
-  {
-    label: "Organizers",
-    value: "—",
-    note: "Waiting for database connection",
-    icon: UserRoundCheck,
-    color: "text-violet-600",
-    background: "bg-violet-50",
-  },
-  {
-    label: "Total events",
-    value: "—",
-    note: "Waiting for database connection",
-    icon: CalendarDays,
-    color: "text-emerald-600",
-    background: "bg-emerald-50",
-  },
-  {
-    label: "Flagged items",
-    value: "—",
-    note: "Waiting for moderation data",
-    icon: CircleAlert,
-    color: "text-amber-600",
-    background: "bg-amber-50",
-  },
-];
-
 const quickLinks = [
   {
     title: "Manage users",
     description: "Review accounts, roles and account status.",
     href: "/admin/users",
     icon: Users,
+  },
+  {
+    title: "Manage organizers",
+    description: "Review organizer accounts and approvals.",
+    href: "/admin/organizers",
+    icon: UserRoundCheck,
   },
   {
     title: "Review events",
@@ -86,7 +57,72 @@ const quickLinks = [
   },
 ];
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  let eventStats = {
+    totalEvents: 0,
+    publishedEvents: 0,
+    flaggedEvents: 0,
+  };
+
+  let databaseError = false;
+
+  try {
+    eventStats = await getAdminEventStats();
+  } catch (error) {
+    databaseError = true;
+    console.error("Failed to load admin event statistics:", error);
+  }
+
+  const metrics: {
+    label: string;
+    value: string;
+    note: string;
+    icon: LucideIcon;
+    color: string;
+    background: string;
+  }[] = [
+    {
+      label: "Total users",
+      value: "—",
+      note: "User database integration pending",
+      icon: Users,
+      color: "text-blue-600",
+      background: "bg-blue-50",
+    },
+    {
+      label: "Organizers",
+      value: "—",
+      note: "Organizer database integration pending",
+      icon: UserRoundCheck,
+      color: "text-violet-600",
+      background: "bg-violet-50",
+    },
+    {
+      label: "Total events",
+      value: databaseError
+        ? "—"
+        : eventStats.totalEvents.toLocaleString(),
+      note: databaseError
+        ? "Unable to load event statistics"
+        : `${eventStats.publishedEvents.toLocaleString()} published`,
+      icon: CalendarDays,
+      color: "text-emerald-600",
+      background: "bg-emerald-50",
+    },
+    {
+      label: "Flagged items",
+      value: databaseError
+        ? "—"
+        : eventStats.flaggedEvents.toLocaleString(),
+      note: databaseError
+        ? "Unable to load moderation statistics"
+        : "Events flagged for review",
+      icon: CircleAlert,
+      color: "text-amber-600",
+      background: "bg-amber-50",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
       <aside className="fixed inset-y-0 left-0 z-20 hidden w-64 flex-col border-r border-slate-200 bg-white md:flex">
@@ -94,10 +130,9 @@ export default function AdminPage() {
           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 text-white">
             <Activity size={22} />
           </div>
+
           <div>
-            <p className="text-base font-bold tracking-tight">
-              EventFlow
-            </p>
+            <p className="text-base font-bold tracking-tight">EventFlow</p>
             <p className="text-xs text-slate-500">Platform management</p>
           </div>
         </div>
@@ -106,6 +141,7 @@ export default function AdminPage() {
           <p className="mb-3 px-3 text-xs font-semibold uppercase tracking-widest text-slate-400">
             Administration
           </p>
+
           <nav className="space-y-1">
             {navigation.map((item) => {
               const Icon = item.icon;
@@ -123,6 +159,7 @@ export default function AdminPage() {
                 >
                   <Icon size={19} />
                   <span>{item.label}</span>
+
                   {active && (
                     <span className="ml-auto h-2 w-2 rounded-full bg-indigo-600" />
                   )}
@@ -138,10 +175,12 @@ export default function AdminPage() {
               <ShieldCheck size={19} />
               <span className="text-sm font-semibold">Admin workspace</span>
             </div>
+
             <p className="text-xs leading-5 text-slate-300">
               Manage platform activity, users and event moderation from one
               place.
             </p>
+
             <p className="mt-3 border-t border-white/10 pt-3 text-xs text-slate-400">
               Event Management Platform
             </p>
@@ -165,6 +204,7 @@ export default function AdminPage() {
               <Search size={16} />
               <span>Platform overview</span>
             </div>
+
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-100 text-sm font-bold text-indigo-700">
               RK
             </div>
@@ -178,14 +218,17 @@ export default function AdminPage() {
                 <p className="mb-2 text-sm font-medium text-indigo-100">
                   HACKERSPACE · EVENT MANAGEMENT
                 </p>
+
                 <h2 className="text-2xl font-bold sm:text-3xl">
                   Welcome to your workspace
                 </h2>
+
                 <p className="mt-2 max-w-xl text-sm leading-6 text-indigo-100">
                   Monitor platform activity and manage users, organizers,
                   events and moderation from one dashboard.
                 </p>
               </div>
+
               <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
                 <LayoutDashboard size={32} />
               </div>
@@ -197,12 +240,18 @@ export default function AdminPage() {
               <div>
                 <h2 className="text-lg font-bold">Platform overview</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  Summary metrics will appear when the admin services are
-                  connected.
+                  Event statistics from the project database.
                 </p>
               </div>
-              <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-700">
-                Setup in progress
+
+              <span
+                className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                  databaseError
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-indigo-200 bg-indigo-50 text-indigo-700"
+                }`}
+              >
+                {databaseError ? "Database unavailable" : "Event metrics"}
               </span>
             </div>
 
@@ -220,16 +269,19 @@ export default function AdminPage() {
                         <p className="text-sm font-medium text-slate-500">
                           {metric.label}
                         </p>
+
                         <p className="mt-3 text-3xl font-bold tracking-tight">
                           {metric.value}
                         </p>
                       </div>
+
                       <div
                         className={`flex h-11 w-11 items-center justify-center rounded-xl ${metric.background} ${metric.color}`}
                       >
                         <Icon size={21} />
                       </div>
                     </div>
+
                     <p className="mt-4 text-xs leading-5 text-slate-500">
                       {metric.note}
                     </p>
@@ -247,7 +299,7 @@ export default function AdminPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
               {quickLinks.map((item) => {
                 const Icon = item.icon;
 
@@ -261,12 +313,15 @@ export default function AdminPage() {
                       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
                         <Icon size={21} />
                       </div>
+
                       <ChevronRight
                         size={19}
                         className="text-slate-400 transition group-hover:translate-x-1 group-hover:text-indigo-600"
                       />
                     </div>
+
                     <h3 className="mt-4 font-semibold">{item.title}</h3>
+
                     <p className="mt-2 text-sm leading-6 text-slate-500">
                       {item.description}
                     </p>
@@ -281,25 +336,35 @@ export default function AdminPage() {
               <div className="rounded-xl bg-amber-50 p-2 text-amber-600">
                 <ClipboardList size={21} />
               </div>
+
               <div>
                 <h2 className="font-semibold">Development checklist</h2>
+
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  The dashboard interface is the first milestone. Database
-                  metrics, role-based access, moderation actions and audit
-                  logging still need to be implemented and tested.
+                  The dashboard UI is created. User statistics, organizer
+                  approval, moderation actions, role-based access and audit
+                  logging still need to be implemented.
                 </p>
+
                 <div className="mt-4 space-y-3 text-sm">
                   <div className="flex items-center gap-3">
                     <span className="h-2 w-2 rounded-full bg-emerald-500" />
                     Dashboard interface created
                   </div>
+
                   <div className="flex items-center gap-3">
                     <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    Database and authentication integration pending
+                    Event database integration being tested
                   </div>
+
                   <div className="flex items-center gap-3">
                     <span className="h-2 w-2 rounded-full bg-amber-500" />
-                    Admin permissions and audit trail pending
+                    Authentication and admin permissions pending
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <span className="h-2 w-2 rounded-full bg-amber-500" />
+                    Audit trail pending
                   </div>
                 </div>
               </div>
@@ -315,3 +380,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

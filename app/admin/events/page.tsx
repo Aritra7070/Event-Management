@@ -9,28 +9,96 @@ import {
   CheckCircle2,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Total events",
-    value: "—",
-    note: "Waiting for event data",
-    icon: CalendarDays,
-  },
-  {
-    label: "Published events",
-    value: "—",
-    note: "Events visible to attendees",
-    icon: CheckCircle2,
-  },
-  {
-    label: "Flagged events",
-    value: "—",
-    note: "Awaiting moderation",
-    icon: ShieldAlert,
-  },
-];
+import {
+  getAdminEventStats,
+  getAdminEvents,
+} from "@/lib/services/admin";
 
-export default function AdminEventsPage() {
+export const dynamic = "force-dynamic";
+
+function formatDate(value: Date | string | null) {
+  if (!value) return "Not scheduled";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "Invalid date";
+
+  return date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function statusStyle(status: string) {
+  switch (status) {
+    case "published":
+      return "bg-green-100 text-green-700";
+    case "archived":
+      return "bg-slate-100 text-slate-700";
+    case "draft":
+      return "bg-amber-100 text-amber-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
+
+function moderationStyle(status: string) {
+  switch (status) {
+    case "flagged":
+      return "bg-red-100 text-red-700";
+    case "removed":
+      return "bg-slate-200 text-slate-700";
+    case "ok":
+      return "bg-green-100 text-green-700";
+    default:
+      return "bg-slate-100 text-slate-700";
+  }
+}
+
+export default async function AdminEventsPage() {
+  let events: Awaited<ReturnType<typeof getAdminEvents>> = [];
+  let stats = {
+    totalEvents: 0,
+    publishedEvents: 0,
+    flaggedEvents: 0,
+  };
+  let databaseError = false;
+
+  try {
+    const [eventStats, eventRecords] = await Promise.all([
+      getAdminEventStats(),
+      getAdminEvents(100),
+    ]);
+
+    stats = eventStats;
+    events = eventRecords;
+  } catch (error) {
+    databaseError = true;
+    console.error("Failed to load Admin Events page:", error);
+  }
+
+  const statCards = [
+    {
+      label: "Total events",
+      value: stats.totalEvents,
+      note: "All events in the database",
+      icon: CalendarDays,
+    },
+    {
+      label: "Published events",
+      value: stats.publishedEvents,
+      note: "Events visible to attendees",
+      icon: CheckCircle2,
+    },
+    {
+      label: "Flagged events",
+      value: stats.flaggedEvents,
+      note: "Awaiting moderation",
+      icon: ShieldAlert,
+    },
+  ];
+
   return (
     <main className="min-h-screen bg-slate-50 px-5 py-8 text-slate-900 sm:px-10">
       <div className="mx-auto max-w-7xl">
@@ -51,7 +119,7 @@ export default function AdminEventsPage() {
               Manage Events
             </h1>
             <p className="mt-2 text-slate-600">
-              Review, moderate and manage platform events.
+              Review and monitor platform events.
             </p>
           </div>
 
@@ -60,8 +128,18 @@ export default function AdminEventsPage() {
           </div>
         </div>
 
+        {databaseError && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700"
+          >
+            Unable to load event data. Check the server terminal for the
+            database error and verify your Neon connection.
+          </div>
+        )}
+
         <section className="mb-8 grid gap-4 md:grid-cols-3">
-          {stats.map((stat) => {
+          {statCards.map((stat) => {
             const Icon = stat.icon;
 
             return (
@@ -73,6 +151,7 @@ export default function AdminEventsPage() {
                   <p className="text-sm text-slate-500">{stat.label}</p>
                   <Icon size={21} className="text-indigo-600" />
                 </div>
+
                 <p className="mt-5 text-3xl font-bold">{stat.value}</p>
                 <p className="mt-2 text-sm text-slate-400">{stat.note}</p>
               </div>
@@ -100,29 +179,81 @@ export default function AdminEventsPage() {
               <thead className="bg-slate-50 text-xs uppercase text-slate-500">
                 <tr>
                   <th className="px-5 py-4">Event</th>
-                  <th className="px-5 py-4">Organizer</th>
+                  <th className="px-5 py-4">Organizer ID</th>
                   <th className="px-5 py-4">Status</th>
                   <th className="px-5 py-4">Moderation</th>
-                  <th className="px-5 py-4">Actions</th>
+                  <th className="px-5 py-4">Starts</th>
+                  <th className="px-5 py-4">Created</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={5} className="px-5 py-16 text-center">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
-                      <Archive size={25} className="text-indigo-600" />
-                    </div>
-                    <p className="font-medium text-slate-800">
-                      No event data connected
-                    </p>
-                    <p className="mx-auto mt-2 max-w-lg text-slate-500">
-                      Event records, status filters and moderation controls
-                      will appear when the event services are connected.
-                    </p>
-                  </td>
-                </tr>
+
+              <tbody className="divide-y divide-slate-100">
+                {events.map((event) => (
+                  <tr key={event.id} className="hover:bg-slate-50">
+                    <td className="px-5 py-4">
+                      <p className="font-medium text-slate-900">
+                        {event.title}
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        {event.slug}
+                      </p>
+                    </td>
+
+                    <td className="px-5 py-4 font-mono text-xs text-slate-600">
+                      {event.ownerId}
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusStyle(event.status)}`}
+                      >
+                        {event.status}
+                      </span>
+                    </td>
+
+                    <td className="px-5 py-4">
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${moderationStyle(event.moderationStatus)}`}
+                      >
+                        {event.moderationStatus}
+                      </span>
+                    </td>
+
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-600">
+                      {formatDate(event.startsAt)}
+                    </td>
+
+                    <td className="whitespace-nowrap px-5 py-4 text-slate-600">
+                      {formatDate(event.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+
+                {!databaseError && events.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-5 py-16 text-center">
+                      <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50">
+                        <Archive size={25} className="text-indigo-600" />
+                      </div>
+
+                      <p className="font-medium text-slate-800">
+                        No events found
+                      </p>
+
+                      <p className="mx-auto mt-2 max-w-lg text-slate-500">
+                        Your database is connected, but there are no event
+                        records to display yet.
+                      </p>
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
+          </div>
+
+          <div className="border-t border-slate-200 px-5 py-3 text-xs text-slate-500">
+            Showing {events.length} event
+            {events.length === 1 ? "" : "s"} (maximum 100)
           </div>
         </section>
       </div>
