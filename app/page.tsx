@@ -88,17 +88,17 @@ export default function Home() {
 
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link
-                  href="/dashboard/events"
+                  href="/events"
                   className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-400"
                 >
-                  Open organizer dashboard
+                  Browse events
                   <ArrowRight className="h-4 w-4" />
                 </Link>
                 <Link
-                  href="/admin"
+                  href="/dashboard/events"
                   className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-slate-200 transition hover:border-white/25 hover:bg-white/10"
                 >
-                  Admin workspace
+                  Organizer dashboard
                 </Link>
               </div>
 
