@@ -1,0 +1,15 @@
+CREATE TABLE IF NOT EXISTS members (
+ id TEXT PRIMARY KEY, email TEXT NOT NULL UNIQUE, name TEXT, image TEXT,
+ verified BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+ verified_at TIMESTAMPTZ
+);
+CREATE TABLE IF NOT EXISTS email_otps (
+ email TEXT PRIMARY KEY, otp_hash TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
+ attempts INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE TABLE IF NOT EXISTS event_announcements (
+ id BIGSERIAL PRIMARY KEY, title TEXT NOT NULL, event_date TEXT NOT NULL, venue TEXT NOT NULL,
+ description TEXT NOT NULL, event_url TEXT NOT NULL, sent_count INTEGER NOT NULL DEFAULT 0,
+ created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS members_verified_email_idx ON members(verified,email);

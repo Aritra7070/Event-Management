@@ -1,80 +1,26 @@
-# Event Management Platform — Events Module
+# Eventora — event platform login starter
 
-Member 4 (Aritra Giri): page builder, event page, lifecycle, organizer dashboard and calendar.
-
-Stack: Next.js 14 App Router · TypeScript strict · Tailwind CSS · Drizzle ORM · Neon PostgreSQL · Zod · Vercel Blob.
+Premium Next.js + TypeScript + Tailwind authentication UI with animated Three.js art, Google OAuth, email OTP verification, Neon Postgres registration, and an event-announcement email API. The dashboard is intentionally a placeholder.
 
 ## Setup
+1. Install Node.js 20+.
+2. Run `npm install`.
+3. Copy `.env.example` to `.env.local` (PowerShell: `Copy-Item .env.example .env.local`).
+4. Configure Google OAuth in Google Cloud Console. Authorized origin: `http://localhost:3000`; redirect URI: `http://localhost:3000/api/auth/callback/google`. Put credentials in `AUTH_GOOGLE_ID` and `AUTH_GOOGLE_SECRET`.
+5. Create a Neon database through Vercel Marketplace and run `db/schema.sql` in its SQL editor. Put its connection string in `DATABASE_URL`.
+6. Configure SMTP. Resend example: host `smtp.resend.com`, port `465`, secure `true`, user `resend`, password your API key. `MAIL_FROM` must be a sender/domain accepted by your provider.
+7. Run `npm run dev`, open `http://localhost:3000`.
 
-```bash
-npm install
-cp .env.example .env.local   # Windows: copy .env.example .env.local
-```
+## Flow
+Google sign-in → OTP sent to the Google account email → enter 6-digit code → member row is marked verified → `/dashboard`. OTP expires after 10 minutes and allows up to five attempts. OTPs are SHA-256 hashed before storage.
 
-Fill in `DATABASE_URL` (Neon) and `BLOB_READ_WRITE_TOKEN` (Vercel Blob). Auth is stubbed until Member 7 delivers the shared Auth.js layer.
+## Send event announcements to all verified members
+POST `/api/events/announce` with `x-event-admin-key: <EVENT_ADMIN_API_KEY>` and JSON:
+`{"title":"Tech Summit","date":"2026-11-20 10:00 IST","venue":"Kolkata","description":"Talks and networking","url":"https://example.com/event"}`
+The API sends to each verified member and returns sent/failed counts. For production, add role-based admin access, rate limiting, queue-based batches, retries, unsubscribe preferences, and audit logs.
 
-```bash
-npm run db:generate   # generate SQL migrations from lib/db/schema
-npm run db:push       # apply the schema to the Neon database
-npm run db:seed       # insert 5 demo events + questions + a co-host
-npm run dev
-```
+## Where to build the future dashboard
+Edit `src/app/dashboard/page.tsx`. The verified flow redirects there automatically. Login UI is in `src/components/LoginExperience.tsx`; OTP UI is in `src/components/VerifyEmailForm.tsx`; email logic is in `src/lib/mail.ts`; database access is in `src/lib/db.ts`.
 
-`npm run build` works without a database because the Drizzle clients are lazy.
-
-## Scripts
-
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Next.js dev server |
-| `npm run build` | Production build + type/lint check |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run lint` | ESLint |
-| `npm run db:generate` | Generate Drizzle SQL migrations |
-| `npm run db:push` | Push the schema to Neon |
-| `npm run db:seed` | Seed demo events |
-| `npm test` | Vitest (tests land in the test phase) |
-
-## Module layout
-
-```
-app/dashboard/events/         organizer list, new-event form, edit page
-app/dashboard/events/actions.ts  server actions for builder + lifecycle
-app/api/blob/upload/          Vercel Blob client-upload token route
-components/events/            MarkdownRenderer, StatusBadge, EventPage, RegisterPanel
-components/events/builder/    9 builder sections + lifecycle actions
-lib/db/schema/events.ts       events, event_hosts, questions
-lib/validators/events.ts      Zod schemas and slug rules
-lib/services/events.ts        P0 read functions + event writes
-lib/services/questions.ts     transactional question editor
-lib/services/hosts.ts         co-host management
-lib/services/registrations-stub.ts  Member 1 integration seam
-lib/cache.ts                  Next.js cache tags
-scripts/seed-events.ts        5-event demo seed
-drizzle/                      generated migrations
-```
-
-## Builder routes
-
-- `/dashboard/events` — organizer dashboard (always dynamic)
-- `/dashboard/events/new` — title form; creates a private draft only on submit
-- `/dashboard/events/[id]/edit` — builder with auto-save per section
-- `/dashboard/events/[id]/preview` — preview (arrives with the shared EventPage)
-- `/e/[slug]` — public event page (arrives with the shared EventPage)
-
-The new-event page deliberately does **not** create a draft during render, so
-refreshing or prefetching `/dashboard/events/new` cannot create junk drafts.
-
-## Interface contract for the rest of the team
-
-These are exported from `lib/services/events.ts` and work with seed data:
-
-```ts
-getEventBySlug(slug: string): Promise<Event | null>
-getEventById(id: string): Promise<Event | null>
-canManageEvent(userId: string, eventId: string): Promise<boolean>
-listPublishedEvents(opts: { tab: "upcoming" | "past"; page: number; pageSize: number })
-getQuestions(eventId: string): Promise<Question[]>
-```
-
-`lib/auth-stubs.ts` and `lib/services/registrations-stub.ts` are the two files to replace when Members 7 and 1 deliver.
+## Production notes
+Never commit `.env.local`. Use a strong `AUTH_SECRET`, configure production Google callback URL, verify sender DNS (SPF/DKIM), and test delivery. Google OAuth itself is an identity-provider sign-in; this project adds a separate OTP step as requested.
