@@ -10,18 +10,12 @@ import {
   getConfirmedCount,
   getViewerState,
 } from "@/lib/services/registrations-stub";
+import { getBaseUrl } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 interface PublicEventPageProps {
   params: { slug: string };
-}
-
-function baseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(
-    /\/+$/,
-    "",
-  );
 }
 
 export async function generateMetadata({
@@ -44,7 +38,7 @@ export async function generateMetadata({
       event.endsAt,
       event.timezone,
     )}`;
-  const canonical = `${baseUrl()}/e/${event.slug}`;
+  const canonical = `${getBaseUrl()}/e/${event.slug}`;
   const imageUrl = event.coverUrl ?? event.logoUrl;
   const images = imageUrl
     ? [{ url: imageUrl, alt: event.title }]
