@@ -13,6 +13,7 @@ import {
   getAdminEventStats,
   getAdminEvents,
 } from "@/lib/services/admin";
+import { requireRole } from "@/lib/auth-stubs";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,8 @@ function moderationStyle(status: string) {
 }
 
 export default async function AdminEventsPage() {
+  await requireRole("admin");
+
   let events: Awaited<ReturnType<typeof getAdminEvents>> = [];
   let stats = {
     totalEvents: 0,
