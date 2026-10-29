@@ -182,7 +182,7 @@ export default async function AdminPage() {
             </p>
 
             <p className="mt-3 border-t border-white/10 pt-3 text-xs text-slate-400">
-              Event Management Platform
+              EventSphere
             </p>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default async function AdminPage() {
             <div className="flex flex-col justify-between gap-6 sm:flex-row sm:items-center">
               <div>
                 <p className="mb-2 text-sm font-medium text-indigo-100">
-                  HACKERSPACE · EVENT MANAGEMENT
+                  EVENTSPHERE · EVENT MANAGEMENT
                 </p>
 
                 <h2 className="text-2xl font-bold sm:text-3xl">
@@ -372,7 +372,7 @@ export default async function AdminPage() {
           </section>
 
           <footer className="flex flex-col justify-between gap-2 border-t border-slate-200 py-5 text-xs text-slate-500 sm:flex-row">
-            <p>Event Management Platform · Admin workspace</p>
+            <p>EventSphere · Admin workspace</p>
             <p>Member 6 · Rajashree Kar</p>
           </footer>
         </div>

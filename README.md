@@ -1,6 +1,6 @@
 # EventSphere 🎟️
 
-EventSphere is a full-featured event management platform for creating, publishing, and running events. This repository contains Member 4's Events module: the organizer page builder, the shared public/preview event page, lifecycle controls, and the registration panel — with the public calendar landing in Phase 6.
+EventSphere is a full-featured event management platform for creating, publishing, and running events. This repository contains Member 4's Events module: the organizer page builder, the shared public/preview event page, lifecycle controls, the registration panel, and the public calendar.
 
 Built with Next.js 14 App Router, TypeScript, Tailwind CSS, Drizzle ORM, Neon PostgreSQL, Zod, and Vercel Blob.
 
@@ -25,6 +25,13 @@ Built with Next.js 14 App Router, TypeScript, Tailwind CSS, Drizzle ORM, Neon Po
 - Drafts, archived events, removed events, and unknown slugs return `404`, including from `generateMetadata()`, so hidden titles never leak.
 - Registration panel covers approval, full/waitlist, ended, closed, draft, archived, and removed states.
 - Shareable `EventPage` layout reused by the authenticated organizer preview.
+
+### 📅 Public Calendar
+
+- `/events` lists published events in upcoming or past order, 12 per page.
+- Upcoming/Past tabs and accessible pagination preserve the active view.
+- Cards show the cover, date range, mode, and location, and link to `/e/[slug]`.
+- Draft, archived, and removed events never appear because the listing reuses the public visibility rules.
 
 ### 🗓️ Organizer Dashboard & Preview
 
@@ -125,9 +132,10 @@ getQuestions(eventId: string): Promise<Question[]>
 | `/dashboard/events/new` | Title-only draft creation |
 | `/dashboard/events/[id]/edit` | Section-based event builder |
 | `/dashboard/events/[id]/preview` | Authenticated preview of the public page |
+| `/events` | Public upcoming/past calendar |
 | `/e/[slug]` | Public event page with metadata |
 
-Both `/e/[slug]` and the preview route are `force-dynamic`, so `next build` never queries the database.
+The public routes (`/events`, `/e/[slug]`) and the preview route are `force-dynamic`, so `next build` never queries the database.
 
 ## Scripts
 
@@ -144,7 +152,7 @@ Both `/e/[slug]` and the preview route are `force-dynamic`, so `next build` neve
 
 ## Project Status
 
-- **Phase 6** — `EventCard`, the public `/events` calendar, and dashboard quick links are next.
+- **Dashboard quick links** — organizer shortcuts to preview and public pages are next.
 - **Registration route** — `/e/[slug]/register` belongs to Member 1; the Register CTA is wired to it and returns 404 until it lands.
 - **Auth** — Member 7's real Auth.js layer replaces `lib/auth-stubs.ts`.
 - **Analytics and check-in** — stubs reserved for Members 3 and 2.
